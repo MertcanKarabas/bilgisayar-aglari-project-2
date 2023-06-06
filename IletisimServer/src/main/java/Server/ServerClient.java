@@ -6,6 +6,8 @@ package Server;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
@@ -20,11 +22,12 @@ import java.util.logging.Logger;
 public class ServerClient extends Thread {
 
     Socket socket;
+    String name;
     OutputStream output;
     InputStream input;
     boolean isListening;
     Server server;
-    
+
     public ServerClient(Socket socket, Server server) throws IOException {
         this.server = server;
         this.isListening = false;
@@ -33,43 +36,92 @@ public class ServerClient extends Thread {
         this.input = socket.getInputStream();
     }
 
-    public void sendMessage(byte[] bytes) {
-        try {
-            this.output.write(bytes);
-        } catch (IOException ex) {
-            Logger.getLogger(ServerClient.class.getName()).log(Level.SEVERE, null, ex);
-        }
+    public void sendMessage(byte[] bytes) throws IOException {
+        this.output.write(bytes);
     }
-    
-    public void StartClient() {
+
+    public String clientNames() {
+        return null;
+    }
+
+    public void StartClient(ServerClient srvClient) {
         this.isListening = true;
         this.start();
     }
-    
+
     public void StopClient() {
         try {
             this.isListening = false;
+            this.server.removeClient(this);
             this.input.close();
             this.output.close();
-            this.socket.close();
-            this.server.removeClient(this);
+            this.socket.close();  
         } catch (IOException ex) {
+            //System.out.println("Client düzgün kapanmadı.." + ex);
             Logger.getLogger(ServerClient.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
     @Override
     public void run() {
+
+        int byteSize;
+
         try {
             while (this.isListening) {
-                int byteSize = this.input.read();
-                byte[] bytes = new byte[byteSize];
+
+                byteSize = this.input.read();
+                byte bytes[] = new byte[byteSize]; // blocking
                 this.input.read(bytes);
-                String name = " "; //gelen mesaja boşluk atıyorum ki broadcast yaparken de bir tane silsin problem olmasın...
-                name += new String(bytes, StandardCharsets.UTF_8);
-                this.server.sendBroadcast(name);
-                Server_Frame.lst_client_model.addElement(name);
+
+                String recievedMessage = new String(bytes, StandardCharsets.UTF_8);
+                System.out.println("--------------------");
+                System.out.println("Gelen mesaj: " + recievedMessage);
+                String[] recievedSplitted = recievedMessage.split(" ");
+                String typeOfMessage = recievedSplitted[0];
+
+                if (typeOfMessage.equals("FirstTime")) {
+                    
+                    System.out.println("First Time algılandı...");
+                    this.name = recievedSplitted[1];
+                    
+                    for (ServerClient client : server.clients) {
+                        recievedMessage += " " + client.name;
+                        System.out.println("Clientler.. " + client.name);
+                    }
+                    
+                    String sendingMessage = " " + recievedMessage;
+                    System.out. println("Gönderilen Mesaj: " + sendingMessage);
+                    System.out.println("---------------------------");
+                    this.server.sendBroadcast(sendingMessage);
+
+                } else if (typeOfMessage.equals("Name")) {
+                    
+                } else if (typeOfMessage.equals("Disconnect")) {
+                    
+                    System.out.println("Disconnect mesajı algılandı...");
+                    String sendingMessage = " " + recievedMessage;
+                    System.out.println("Gönderilen Mesag: " + sendingMessage);
+                    this.server.sendBroadcast(sendingMessage);
+                    this.StopClient();
+                    
+                } else if (typeOfMessage.equals("Text")) {
+                    
+                    System.out.println("Text algılandı...");
+                    System.out.println("Broadcast mesaj yollanıyor...");
+                    String broadcastMessage = " " + recievedMessage;
+                    System.out.println("Yollanan mesaj: " + broadcastMessage);
+                    System.out.println("-----------------------------");
+                    this.server.sendBroadcast(broadcastMessage);
+                
+                } else if (typeOfMessage.equals("PrivateText")) {
+
+                } else if (typeOfMessage.equals("GroupID")) {
+
+                }
+
             }
+
         } catch (IOException ex) {
             this.StopClient();
             System.out.println("Client Stopped");

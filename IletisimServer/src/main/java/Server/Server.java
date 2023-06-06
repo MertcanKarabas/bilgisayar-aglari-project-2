@@ -44,7 +44,7 @@ public class Server extends Thread {
         return this.clients.get(index);
     } 
     
-    public void sendBroadcast(String messages) {
+    public void sendBroadcast(String messages) throws IOException {
         byte[] bytes = messages.getBytes();
         for (ServerClient client : clients) {
             client.sendMessage(bytes);
@@ -67,9 +67,9 @@ public class Server extends Thread {
             try {
                 System.out.println("Client Bekleniyor...");
                 Socket clientSocket = serverSocket.accept();//Client bağlantısı bekleniyor..         
-                ServerClient newClient = new ServerClient(clientSocket, this);
+                ServerClient newClient = new ServerClient(clientSocket, this);       
+                newClient.StartClient(newClient);
                 this.addClient(newClient);
-                newClient.StartClient();
                 System.out.println("Client bağlandı...");
             } catch (IOException ex) {
                 Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);

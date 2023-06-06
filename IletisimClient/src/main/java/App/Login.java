@@ -125,7 +125,7 @@ public class Login extends javax.swing.JFrame {
         );
 
         pnl_closeMaxMin.add(pnl_max);
-        pnl_max.setBounds(0, 0, 30, 0);
+        pnl_max.setBounds(0, 0, 30, 30);
 
         pnl_close.setBackground(new java.awt.Color(0, 100, 102));
 
@@ -159,7 +159,7 @@ public class Login extends javax.swing.JFrame {
         );
 
         pnl_closeMaxMin.add(pnl_close);
-        pnl_close.setBounds(30, 0, 30, 0);
+        pnl_close.setBounds(30, 0, 30, 30);
 
         pnl_header.add(pnl_closeMaxMin, java.awt.BorderLayout.LINE_END);
 

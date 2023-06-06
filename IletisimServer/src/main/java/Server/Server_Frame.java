@@ -117,7 +117,8 @@ public class Server_Frame extends javax.swing.JFrame {
 
     private void btn_boradcastActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_boradcastActionPerformed
         // TODO add your handling code here:
-        this.server.sendBroadcast(txt_sendBoradcast.getText());
+       // Message message = new Message(Message.Message_Type.Text);
+       // this.server.sendBroadcast(txt_sendBoradcast.getText());
     }//GEN-LAST:event_btn_boradcastActionPerformed
 
     /**
@@ -145,6 +146,7 @@ public class Server_Frame extends javax.swing.JFrame {
         } catch (javax.swing.UnsupportedLookAndFeelException ex) {
             java.util.logging.Logger.getLogger(Server_Frame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
+        //</editor-fold>
         //</editor-fold>
 
         /* Create and display the form */

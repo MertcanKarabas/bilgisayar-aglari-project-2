@@ -10,6 +10,7 @@ import Forms.Emoji;
 import Forms.People;
 import Forms.ScrollBar;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.event.KeyEvent;
@@ -17,6 +18,7 @@ import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JLabel;
+import javax.swing.JLayeredPane;
 import javax.swing.JPanel;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
@@ -34,13 +36,19 @@ public class ClientMainFrame extends javax.swing.JFrame {
     Emoji emojiFrame;
     String clientName;
     Client client;
+
+    boolean isPeople = true;
+    boolean isGroup = false;
+    boolean isSettings = false;
+    boolean isClosed = false;
     private final String SERVER_ADDRESS = "localhost";
     private final int PORT = 10000;
+
     /*
     Debug için ClientMainFrame constructure'u eleman almadan yapıyoruz
     normalde loginden gelecek orası ama sürekli login açıp isim yazmamak için şimdilik kaldırıyoruz.
     en son String clientName alan cunstructor kalacak ve loginden bu frame'yi açtığın yere onu koyacaksın.
-    */
+     */
     public ClientMainFrame(String clientName) {
         this.clientName = clientName;
         init();
@@ -48,13 +56,14 @@ public class ClientMainFrame extends javax.swing.JFrame {
         init2();
 
     }
+
     public ClientMainFrame() {
         initComponents();
         init();
         init2();
     }
-    
-    private void init() {     
+
+    private void init() {
         try {
             this.client = new Client(this.SERVER_ADDRESS, this.PORT, this.clientName, this);
             this.client.StartClient();
@@ -62,7 +71,7 @@ public class ClientMainFrame extends javax.swing.JFrame {
             Logger.getLogger(ClientMainFrame.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-    
+
     private void init2() {
         lbl_clientName.setText(this.clientName);
         txta_messages.setEditable(false);
@@ -77,16 +86,10 @@ public class ClientMainFrame extends javax.swing.JFrame {
         compRes.setSnapSize(new Dimension(10, 10));
 
         layeredPane_lists.setLayout(new MigLayout("fillx", "0[]0", "1[]1")); //chat alanını düzenlemek için yapıyoruz.
-
-        showMessages();
-    }
-
-    private void showMessages() {
-        layeredPane_lists.removeAll();
-        for (int i = 0; i < 15; i++) {
-            layeredPane_lists.add(new People("People " + i), "wrap");
-        }
-        refreshList();
+        showMessages("Global");
+        People global = (People)layeredPane_lists.getComponent(0);
+        global.setIsClicked(true);
+        lbl_chatHeaderTitle.setText("Global");
     }
 
     public JTextArea getTxta_messages() {
@@ -96,7 +99,7 @@ public class ClientMainFrame extends javax.swing.JFrame {
     public void setTxta_messages(JTextArea txta_messages) {
         this.txta_messages = txta_messages;
     }
-    
+
     public JPanel getPnl_emoji() {
         return pnl_emoji;
     }
@@ -113,12 +116,35 @@ public class ClientMainFrame extends javax.swing.JFrame {
         this.pnl_emoji = pnl_emoji;
     }
 
+    public JLayeredPane getLayeredPane_lists() {
+        return layeredPane_lists;
+    }
+
+    public void setLayeredPane_lists(JLayeredPane layeredPane_lists) {
+        this.layeredPane_lists = layeredPane_lists;
+    }
+
     public JTextField getTxt_message() {
         return txt_message;
     }
 
     public void setTxt_message(JTextField txt_message) {
         this.txt_message = txt_message;
+    }
+    
+    public void showMessages() {
+        layeredPane_lists.removeAll();
+        for (int i = 0; i < 10; i++) {
+            
+        }
+        refreshList();
+    }
+    
+    public void showMessages(String name) {
+        if(isPeople){
+            layeredPane_lists.add(new People(name), "wrap");
+            refreshList();
+        }
     }
 
     private void showGroups() {
@@ -137,21 +163,56 @@ public class ClientMainFrame extends javax.swing.JFrame {
         refreshList();
     }
 
-    private void refreshList() {
+    public void refreshList() {
         layeredPane_lists.repaint();
         layeredPane_lists.revalidate();
     }
 
     private void sendMessage() {
         String message = " " + this.clientName + ": " + txt_message.getText();
-        if (!message.equals("")) {
-            try {
-                this.client.sendMessage(message.getBytes());
-            } catch (IOException ex) {
-                Logger.getLogger(ClientMainFrame.class.getName()).log(Level.SEVERE, null, ex);
+        People p = isPeopleClicked();
+        try {
+            
+            if(isClosed) {
+                String sendingMessage = " Disconnect" + message;
+                this.client.sendMessage(sendingMessage.getBytes());
+                System.exit(0);
             }
+            
+            if (p.getName().equals("Global")) {
+                String sendingMessageBroadcast = " Text" + message;   
+                this.client.sendMessage(sendingMessageBroadcast.getBytes());
+                
+
+            } else {
+
+                if (isPeople) {
+                    String sendingMessagePrivate = " Private" + message;                    
+                    this.client.sendMessage(sendingMessagePrivate.getBytes());
+
+                } else if (isGroup) {
+                    String sendingMessageGroup = " GroupID" + message;                    
+                    this.client.sendMessage(sendingMessageGroup.getBytes());
+                }
+            }
+            
             txt_message.setText("");
+        } catch (IOException ex) {
+            Logger.getLogger(ClientMainFrame.class.getName()).log(Level.SEVERE, null, ex);
         }
+
+    }
+
+    private People isPeopleClicked() {
+        if (layeredPane_lists.getComponents() != null) {
+            for (Component comp : layeredPane_lists.getComponents()) {
+                People person = (People) comp;
+                if (person.isClicked()) {
+                    return person;
+                }
+            }
+        }
+        return null;
     }
 
     public void changeColor(JPanel hover, Color rand) {
@@ -161,7 +222,7 @@ public class ClientMainFrame extends javax.swing.JFrame {
     public void changeImage(JLabel menu, String img) {
         menu.setIcon(new javax.swing.ImageIcon(img));
     }
-    
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -189,6 +250,7 @@ public class ClientMainFrame extends javax.swing.JFrame {
         layeredPane_lists = new javax.swing.JLayeredPane();
         pnl_chatBackground = new javax.swing.JPanel();
         pnl_chatHeader = new javax.swing.JPanel();
+        lbl_chatHeaderTitle = new javax.swing.JLabel();
         pnl_messages = new javax.swing.JPanel();
         scrollPane_messages = new javax.swing.JScrollPane();
         txta_messages = new javax.swing.JTextArea();
@@ -260,7 +322,7 @@ public class ClientMainFrame extends javax.swing.JFrame {
         );
 
         pnl_closeMaxMin.add(pnl_max);
-        pnl_max.setBounds(0, 0, 30, 0);
+        pnl_max.setBounds(0, 0, 30, 30);
 
         pnl_close.setBackground(new java.awt.Color(0, 100, 102));
 
@@ -294,7 +356,7 @@ public class ClientMainFrame extends javax.swing.JFrame {
         );
 
         pnl_closeMaxMin.add(pnl_close);
-        pnl_close.setBounds(30, 0, 30, 0);
+        pnl_close.setBounds(30, 0, 30, 30);
 
         pnl_header.add(pnl_closeMaxMin, java.awt.BorderLayout.LINE_END);
 
@@ -403,15 +465,24 @@ public class ClientMainFrame extends javax.swing.JFrame {
 
         pnl_chatHeader.setBackground(new java.awt.Color(204, 204, 204));
 
+        lbl_chatHeaderTitle.setBackground(new java.awt.Color(255, 153, 153));
+        lbl_chatHeaderTitle.setText("User Name or Group Name");
+
         javax.swing.GroupLayout pnl_chatHeaderLayout = new javax.swing.GroupLayout(pnl_chatHeader);
         pnl_chatHeader.setLayout(pnl_chatHeaderLayout);
         pnl_chatHeaderLayout.setHorizontalGroup(
             pnl_chatHeaderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 599, Short.MAX_VALUE)
+            .addGroup(pnl_chatHeaderLayout.createSequentialGroup()
+                .addGap(17, 17, 17)
+                .addComponent(lbl_chatHeaderTitle, javax.swing.GroupLayout.PREFERRED_SIZE, 370, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(212, Short.MAX_VALUE))
         );
         pnl_chatHeaderLayout.setVerticalGroup(
             pnl_chatHeaderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 50, Short.MAX_VALUE)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pnl_chatHeaderLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(lbl_chatHeaderTitle, javax.swing.GroupLayout.DEFAULT_SIZE, 38, Short.MAX_VALUE)
+                .addContainerGap())
         );
 
         pnl_chatBackground.add(pnl_chatHeader, java.awt.BorderLayout.PAGE_START);
@@ -555,7 +626,6 @@ public class ClientMainFrame extends javax.swing.JFrame {
         setLocationRelativeTo(null);
     }// </editor-fold>//GEN-END:initComponents
 
-    
 
     private void lbl_sendMessageMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lbl_sendMessageMouseClicked
         // TODO add your handling code here:
@@ -603,7 +673,8 @@ public class ClientMainFrame extends javax.swing.JFrame {
 
     private void lbl_closeMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lbl_closeMouseClicked
         // TODO add your handling code here:
-        System.exit(0);
+        isClosed = true;
+        sendMessage();
     }//GEN-LAST:event_lbl_closeMouseClicked
 
     private void lbl_closeMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lbl_closeMouseEntered
@@ -640,6 +711,9 @@ public class ClientMainFrame extends javax.swing.JFrame {
         btn_messages.setSelected(false);
         btn_groups.setSelected(false);
         btn_settings.setSelected(true);
+        this.isPeople = false;
+        this.isGroup = false;
+        this.isSettings = true;
         showSettings();
     }//GEN-LAST:event_btn_settingsActionPerformed
 
@@ -648,6 +722,9 @@ public class ClientMainFrame extends javax.swing.JFrame {
         btn_messages.setSelected(false);
         btn_groups.setSelected(true);
         btn_settings.setSelected(false);
+        this.isPeople = false;
+        this.isGroup = true;
+        this.isSettings = false;
         showGroups();
     }//GEN-LAST:event_btn_groupsActionPerformed
 
@@ -656,7 +733,10 @@ public class ClientMainFrame extends javax.swing.JFrame {
         btn_messages.setSelected(true);
         btn_groups.setSelected(false);
         btn_settings.setSelected(false);
-        showMessages();
+        this.isPeople = true;
+        this.isGroup = false;
+        this.isSettings = false;
+        //showMessages();
     }//GEN-LAST:event_btn_messagesActionPerformed
 
     private void lbl_attachMessageMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lbl_attachMessageMouseClicked
@@ -734,6 +814,7 @@ public class ClientMainFrame extends javax.swing.JFrame {
     private javax.swing.JLayeredPane layeredPane_lists;
     private javax.swing.JLayeredPane layeredPane_menuBar;
     private javax.swing.JLabel lbl_attachMessage;
+    private javax.swing.JLabel lbl_chatHeaderTitle;
     private javax.swing.JLabel lbl_chooseEmoji;
     private javax.swing.JLabel lbl_clientName;
     private javax.swing.JLabel lbl_close;

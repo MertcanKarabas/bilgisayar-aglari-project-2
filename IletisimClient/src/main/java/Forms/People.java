@@ -17,9 +17,31 @@ public class People extends javax.swing.JPanel {
     /**
      * Creates new form People
      */
+    
+    boolean isClicked;
+    int port;
+    String name;
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+    
+    public int getPort() {
+        return port;
+    }
+
+    public void setPort(int port) {
+        this.port = port;
+    }
     public People(String name) {
         initComponents();
         lbl_name.setText(name);
+        this.name = name;
+        isClicked = false;
         init();
     }
 
@@ -32,17 +54,26 @@ public class People extends javax.swing.JPanel {
 
             @Override
             public void mouseExited(MouseEvent evt) {
-                setBackground(new Color(249, 249, 249));
+                if(!isClicked){
+                    setBackground(new Color(249, 249, 249));
+                }  
             }
 
             @Override
             public void mouseClicked(MouseEvent evt) {
-                
+                isClicked = true;
+                setBackground(new Color(230, 230, 230));
             }
-            
-            
-
         });
+    }
+
+    public boolean isClicked() {
+        return isClicked;
+    }
+
+    public void setIsClicked(boolean isClicked) {
+        this.isClicked = isClicked;
+        setBackground(new Color(230, 230, 230));
     }
 
     /**

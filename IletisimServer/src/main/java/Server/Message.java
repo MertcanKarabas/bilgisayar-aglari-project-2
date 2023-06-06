@@ -12,7 +12,7 @@ package Server;
 
 public class Message implements java.io.Serializable {
     //mesaj tipleri enum 
-    public static enum Message_Type {Name, Disconnect, Text, PrivateText, GroupID}
+    public static enum Message_Type {FirstTime, Name, Disconnect, Text, PrivateText, GroupID}
     //mesajın tipi
     public Message_Type type;
     //mesajın içeriği obje tipinde ki istenilen tip içerik yüklenebilsin
@@ -20,6 +20,6 @@ public class Message implements java.io.Serializable {
     public Message(Message_Type t)
     {
         this.type=t;
-    }
+    } 
     
 }
